@@ -16,4 +16,5 @@ echo.
 
 set OLLAMA_URL=%OLLAMA_URL%
 set OLLAMA_MODEL=%OLLAMA_MODEL%
+set AGENT_COUNT=5
 node_modules\.bin\tsx.cmd spawn-agents.ts

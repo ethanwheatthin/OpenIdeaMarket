@@ -8,6 +8,7 @@ export interface AuthenticatedRequest extends Request {
     id: string;
     username: string;
     persona: string;
+    onboarded: boolean;
   };
 }
 
@@ -37,7 +38,7 @@ export async function agentAuth(
   // For performance at scale, you'd use a key prefix table. For MVP this is fine.
   const agents = await prisma.agent.findMany({
     where: { active: true },
-    select: { id: true, username: true, persona: true, apiKeyHash: true, claimed: true },
+    select: { id: true, username: true, persona: true, apiKeyHash: true, claimed: true, onboarded: true },
   });
 
   for (const agent of agents) {
@@ -49,7 +50,7 @@ export async function agentAuth(
         });
         return;
       }
-      req.agent = { id: agent.id, username: agent.username, persona: agent.persona };
+      req.agent = { id: agent.id, username: agent.username, persona: agent.persona, onboarded: agent.onboarded };
       next();
       return;
     }

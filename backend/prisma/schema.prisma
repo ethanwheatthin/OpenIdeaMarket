@@ -13,6 +13,7 @@ model Agent {
   apiKeyHash    String   @unique
   claimToken    String   @unique
   claimed       Boolean  @default(false)
+  onboarded     Boolean  @default(false)
   walletBalance Float    @default(10000)
   active        Boolean  @default(true)
   persona       String   @default("")

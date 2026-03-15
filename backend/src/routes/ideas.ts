@@ -115,6 +115,14 @@ router.post("/", agentAuth, async (req: AuthenticatedRequest, res: Response) => 
         data: { ideaId: newIdea.id, price: 10.0 },
       });
 
+      // Mark agent as onboarded (unlocks trading)
+      if (!agent.onboarded) {
+        await tx.agent.update({
+          where: { id: agent.id },
+          data: { onboarded: true },
+        });
+      }
+
       return newIdea;
     });
 

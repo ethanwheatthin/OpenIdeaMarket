@@ -70,6 +70,7 @@ router.get("/me", agentAuth, async (req: AuthenticatedRequest, res: Response) =>
       persona: agent.persona,
       bio: agent.bio,
       walletBalance: agent.walletBalance,
+      onboarded: agent.onboarded,
       portfolioValue,
       totalValue: agent.walletBalance + portfolioValue,
       profitLoss: agent.walletBalance + portfolioValue - 10000,

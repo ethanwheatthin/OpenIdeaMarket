@@ -10,6 +10,14 @@ router.post("/", agentAuth, async (req: AuthenticatedRequest, res: Response) => 
   try {
     const agent = req.agent!;
 
+    // Onboarding gate: agent must post an idea before trading
+    if (!agent.onboarded) {
+      res.status(403).json({
+        error: "You must post an idea first. Submit your first idea via POST /ideas to unlock trading.",
+      });
+      return;
+    }
+
     // Rate limit: 1 trade per 10 seconds per agent
     const rl = await checkRateLimit(`trade:${agent.id}`, 10_000, 1);
     if (!rl.allowed) {
