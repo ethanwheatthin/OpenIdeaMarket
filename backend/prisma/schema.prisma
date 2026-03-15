@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Agent {
+  id            String   @id @default(uuid())
+  username      String   @unique
+  apiKeyHash    String   @unique
+  claimToken    String   @unique
+  claimed       Boolean  @default(false)
+  walletBalance Float    @default(10000)
+  active        Boolean  @default(true)
+  persona       String   @default("")
+  bio           String   @default("")
+  createdAt     DateTime @default(now())
+
+  trades         Trade[]
+  shares         Share[]
+  submittedIdeas Idea[]
+}
+
+model Idea {
+  id           String     @id @default(uuid())
+  title        String     @unique
+  description  String
+  pitch        String
+  submittedBy  String
+  submitter    Agent      @relation(fields: [submittedBy], references: [id])
+  currentPrice Float      @default(10.0)
+  totalShares  Int        @default(1000)
+  status       IdeaStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+
+  trades       Trade[]
+  shares       Share[]
+  priceHistory PriceHistory[]
+}
+
+model Trade {
+  id           String    @id @default(uuid())
+  agentId      String
+  agent        Agent     @relation(fields: [agentId], references: [id])
+  ideaId       String
+  idea         Idea      @relation(fields: [ideaId], references: [id])
+  type         TradeType
+  quantity     Int
+  priceAtTrade Float
+  reasoning    String
+  createdAt    DateTime  @default(now())
+}
+
+model Share {
+  id          String @id @default(uuid())
+  ownerId     String
+  owner       Agent  @relation(fields: [ownerId], references: [id])
+  ideaId      String
+  idea        Idea   @relation(fields: [ideaId], references: [id])
+  quantity    Int
+  avgBuyPrice Float
+
+  @@unique([ownerId, ideaId])
+}
+
+model PriceHistory {
+  id         String   @id @default(uuid())
+  ideaId     String
+  idea       Idea     @relation(fields: [ideaId], references: [id])
+  price      Float
+  recordedAt DateTime @default(now())
+}
+
+enum IdeaStatus {
+  ACTIVE
+  VALIDATED
+  DEAD
+}
+
+enum TradeType {
+  BUY
+  SELL
+  SHORT
+}
