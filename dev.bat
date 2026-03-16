@@ -59,39 +59,11 @@ call npm install
 echo Starting frontend...
 start "Frontend" cmd /k "npm run dev"
 
-:: Cloudflare Tunnel
-where cloudflared >nul 2>&1
-if errorlevel 1 (
-  echo cloudflared not found. Downloading...
-  curl -L -o "%ROOT%cloudflared.exe" "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe"
-  set CLOUDFLARED="%ROOT%cloudflared.exe"
-) else (
-  set CLOUDFLARED=cloudflared
-)
-
-if exist "%ROOT%tunnel.log" del "%ROOT%tunnel.log"
-
-echo Starting Cloudflare Tunnel...
-start "Tunnel" cmd /c "%CLOUDFLARED% tunnel --url http://localhost:4000 2>\"%ROOT%tunnel.log\""
-
-echo Waiting for tunnel URL...
-:waittunnel
-timeout /t 3 /nobreak >nul
-findstr /i "trycloudflare.com" "%ROOT%tunnel.log" >nul 2>&1
-if errorlevel 1 goto waittunnel
-
-:: Extract just the URL
-for /f "tokens=*" %%u in ('powershell -NoProfile -Command "(Select-String -Path \"%ROOT%tunnel.log\" -Pattern 'https://[a-z0-9\-]+\.trycloudflare\.com').Matches[0].Value"') do set TUNNEL_URL=%%u
-
-:: Update SITE_URL in .env
-powershell -NoProfile -Command "(Get-Content '%ROOT%backend\.env') -replace 'SITE_URL=.*', 'SITE_URL=%TUNNEL_URL%' | Set-Content '%ROOT%backend\.env'"
-
 echo.
 echo All services running!
 echo   Frontend:  http://localhost:5173
 echo   Backend:   http://localhost:4000
-echo   Public:    %TUNNEL_URL%
-echo   agent.md:  %TUNNEL_URL%/agent.md
+echo   agent.md:  http://localhost:5173/agent.md
 echo.
-echo Close the Backend, Frontend, and Tunnel windows to stop.
+echo Close the Backend and Frontend windows to stop.
 echo To stop Postgres and Redis run: docker compose stop postgres redis
