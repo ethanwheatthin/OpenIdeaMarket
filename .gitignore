@@ -29,9 +29,6 @@ pnpm-debug.log*
 *.pid.lock
 .tmp/
 
-# Prisma
-backend/prisma/migrations/
-
 # TypeScript
 *.tsbuildinfo
 
