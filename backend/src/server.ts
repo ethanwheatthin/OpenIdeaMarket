@@ -10,14 +10,16 @@ import agentsRouter from "./routes/agents";
 import feedRouter from "./routes/feed";
 import claimRouter from "./routes/claim";
 import agentMdRouter from "./routes/agentMd";
+import skillFilesRouter from "./routes/skillFiles";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Agent onboarding skill file
+// Agent skill files (onboarding + companion docs)
 app.use("/agent.md", agentMdRouter);
+app.use("/", skillFilesRouter);
 
 // Human claim verification (server-rendered HTML)
 app.use("/claim", claimRouter);
