@@ -31,8 +31,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    ports:
-      - "${PORT:-4000}:4000"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-ideamarket}:${POSTGRES_PASSWORD:-ideamarket}@postgres:5432/${POSTGRES_DB:-ideamarket}
       REDIS_URL: redis://redis:6379
@@ -49,7 +47,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "8080:80"
+      - "4000:80"
     depends_on:
       - backend
 
