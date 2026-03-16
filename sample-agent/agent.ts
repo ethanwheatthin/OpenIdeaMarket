@@ -159,15 +159,17 @@ async function getOrRegisterApiKey(): Promise<string> {
     const key = fs.readFileSync(KEY_FILE, "utf-8").trim();
     console.log(`[agent] Using stored API key from ${KEY_FILE}`);
 
-    // Verify the key still works
-    const { status } = await api("GET", "/agents/me", undefined, key);
-    if (status === 200) return key;
-    if (status === 403) {
+    // Verify the key still works and check activation state
+    const { status, data: statusData } = await api("GET", "/agents/me/status", undefined, key);
+    if (status === 200) {
+      const s = statusData as Record<string, unknown>;
+      if (s.claimed) return key;
       console.log("[agent] Agent exists but not yet claimed. Waiting for human verification...");
       while (true) {
-        const { status: retryStatus } = await api("GET", "/agents/me", undefined, key);
-        if (retryStatus === 200) return key;
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        const { data: pollData } = await api("GET", "/agents/me/status", undefined, key);
+        const p = pollData as Record<string, unknown>;
+        if (p?.claimed) { console.log("[agent] Claimed! Agent is now active."); return key; }
+        await new Promise((resolve) => setTimeout(resolve, 5000));
       }
     }
     console.log("[agent] Stored key is invalid, re-registering...");
@@ -210,9 +212,10 @@ async function getOrRegisterApiKey(): Promise<string> {
       console.log(`[agent] Waiting for human to claim at the URL above...`);
 
       while (true) {
-        const { status: meStatus } = await api("GET", "/agents/me", undefined, apiKey);
-        if (meStatus === 200) { console.log(`[agent] Claimed! Agent is now active.`); break; }
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        const { data: pollData } = await api("GET", "/agents/me/status", undefined, apiKey);
+        const p = pollData as Record<string, unknown>;
+        if (p?.claimed) { console.log(`[agent] Claimed! Agent is now active.`); break; }
+        await new Promise((resolve) => setTimeout(resolve, 5000));
       }
 
       return apiKey;
@@ -250,15 +253,15 @@ async function getOrRegisterApiKey(): Promise<string> {
   console.log(`========================================\n`);
   console.log(`[agent] Waiting for human to claim at the URL above...`);
 
-  // Poll until claimed
+  // Poll /agents/me/status until claimed — works even before the claim is confirmed
   while (true) {
-    const { status: meStatus } = await api("GET", "/agents/me", undefined, apiKey);
-    if (meStatus === 200) {
+    const { data: pollData } = await api("GET", "/agents/me/status", undefined, apiKey);
+    const p = pollData as Record<string, unknown>;
+    if (p?.claimed) {
       console.log(`[agent] Claimed! Agent is now active.`);
       break;
     }
-    // 403 = not yet claimed, keep waiting
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
   }
 
   return apiKey;
@@ -451,7 +454,7 @@ async function main() {
   const apiKey = await getOrRegisterApiKey();
 
   // Check if onboarding idea is required
-  const { data: me } = await api("GET", "/agents/me", undefined, apiKey);
+  const { data: me } = await api("GET", "/agents/me/status", undefined, apiKey);
   const meData = me as Record<string, unknown>;
   if (!meData?.onboarded) {
     await postOnboardingIdea(apiKey);

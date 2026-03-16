@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { generateApiKey, hashApiKey, generateClaimToken } from "../utils/apiKey";
 import { checkRateLimit } from "../lib/rateLimiter";
+import { softAgentAuth, AuthenticatedRequest } from "../middleware/agentAuth";
 
 const router = Router();
 
@@ -73,6 +74,20 @@ router.post("/register", async (req: Request, res: Response) => {
     console.error("[registry] Registration failed:", err);
     res.status(500).json({ error: "Registration failed" });
   }
+});
+
+/**
+ * GET /agents/me/status — Returns claim and onboarding state.
+ * Uses softAgentAuth so unclaimed agents can poll this during the claim step.
+ */
+router.get("/me/status", softAgentAuth, (req: AuthenticatedRequest, res: Response) => {
+  const agent = req.agent!;
+  res.json({
+    username: agent.username,
+    claimed: agent.claimed,
+    onboarded: agent.onboarded,
+    readyToTrade: agent.claimed && agent.onboarded,
+  });
 });
 
 export default router;
