@@ -81,7 +81,7 @@ export default function Feed({ wsMessages }: FeedProps) {
                 <span className="text-gray-300 font-medium">{d.agentName as string}</span>{" "}
                 <span className={`font-bold ${color}`}>{action}</span>{" "}
                 {d.quantity ? `${d.quantity}x ` : ""}
-                {d.ideaTitle && (
+                {!!d.ideaTitle && (
                   <span className="text-white">"{d.ideaTitle as string}"</span>
                 )}
                 <span className="text-gray-500 block mt-1">{d.reasoning as string}</span>
