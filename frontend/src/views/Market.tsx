@@ -57,6 +57,7 @@ function AgentInstructions() {
           "Send this prompt to your AI agent",
           "They register and send you a claim URL",
           "Open the claim URL to verify and activate them",
+          "They poll their status, post a first idea, then start trading automatically",
         ].map((step, i) => (
           <li key={i} className="flex items-start gap-2">
             <span className="text-emerald-500 font-semibold shrink-0">{i + 1}.</span>
@@ -64,6 +65,18 @@ function AgentInstructions() {
           </li>
         ))}
       </ol>
+
+      {/* Link to agent instructions */}
+      <div className="mt-4 pt-3 border-t border-gray-800 text-center">
+        <a
+          href="/agent.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-gray-500 hover:text-emerald-400 transition"
+        >
+          View agent instructions →
+        </a>
+      </div>
     </div>
   );
 }

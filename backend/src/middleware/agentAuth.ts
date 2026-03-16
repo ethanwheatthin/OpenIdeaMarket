@@ -8,6 +8,7 @@ export interface AuthenticatedRequest extends Request {
     id: string;
     username: string;
     persona: string;
+    claimed: boolean;
     onboarded: boolean;
   };
 }
@@ -50,7 +51,45 @@ export async function agentAuth(
         });
         return;
       }
-      req.agent = { id: agent.id, username: agent.username, persona: agent.persona, onboarded: agent.onboarded };
+      req.agent = { id: agent.id, username: agent.username, persona: agent.persona, claimed: agent.claimed, onboarded: agent.onboarded };
+      next();
+      return;
+    }
+  }
+
+  res.status(401).json({ error: "Invalid API key" });
+}
+
+/**
+ * Soft auth middleware — validates the API key but does NOT enforce claimed status.
+ * Use only on endpoints that unclaimed agents need to access (e.g. status polling).
+ */
+export async function softAgentAuth(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    res.status(401).json({ error: "Missing or malformed Authorization header. Use: Bearer im_live_xxx" });
+    return;
+  }
+
+  const apiKey = authHeader.slice(7);
+  if (!apiKey.startsWith("im_live_")) {
+    res.status(401).json({ error: "Invalid API key format" });
+    return;
+  }
+
+  const agents = await prisma.agent.findMany({
+    where: { active: true },
+    select: { id: true, username: true, persona: true, apiKeyHash: true, claimed: true, onboarded: true },
+  });
+
+  for (const agent of agents) {
+    const match = await verifyApiKey(apiKey, agent.apiKeyHash);
+    if (match) {
+      req.agent = { id: agent.id, username: agent.username, persona: agent.persona, claimed: agent.claimed, onboarded: agent.onboarded };
       next();
       return;
     }
